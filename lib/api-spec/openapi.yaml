@@ -1,0 +1,454 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: ZeroAdmin platform API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: servers
+    description: Server management
+  - name: metrics
+    description: Server metrics
+  - name: alerts
+    description: Alert management
+  - name: dashboard
+    description: Dashboard summaries
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /servers:
+    get:
+      operationId: listServers
+      tags: [servers]
+      summary: List all servers
+      responses:
+        "200":
+          description: List of servers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Server"
+    post:
+      operationId: createServer
+      tags: [servers]
+      summary: Add a new server
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServerInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Server"
+
+  /servers/{id}:
+    get:
+      operationId: getServer
+      tags: [servers]
+      summary: Get server by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Server details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Server"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateServer
+      tags: [servers]
+      summary: Update server
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServerUpdate"
+      responses:
+        "200":
+          description: Updated server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Server"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteServer
+      tags: [servers]
+      summary: Delete server
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /servers/{id}/metrics:
+    get:
+      operationId: getServerMetrics
+      tags: [metrics]
+      summary: Get latest metrics for a server
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Server metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerMetrics"
+        "404":
+          description: Not found
+    post:
+      operationId: pushServerMetrics
+      tags: [metrics]
+      summary: Push metrics from agent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MetricsInput"
+      responses:
+        "201":
+          description: Metrics recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerMetrics"
+
+  /servers/{id}/metrics/history:
+    get:
+      operationId: getMetricsHistory
+      tags: [metrics]
+      summary: Get metrics history for a server (last 60 data points)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Metrics history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ServerMetrics"
+
+  /servers/{id}/alerts:
+    get:
+      operationId: listServerAlerts
+      tags: [alerts]
+      summary: List alerts for a server
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Alerts list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+
+  /alerts:
+    get:
+      operationId: listAlerts
+      tags: [alerts]
+      summary: List all alerts
+      responses:
+        "200":
+          description: All alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+
+  /alerts/{id}/resolve:
+    patch:
+      operationId: resolveAlert
+      tags: [alerts]
+      summary: Mark an alert as resolved
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Resolved alert
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+        "404":
+          description: Not found
+
+  /alerts/{id}/analyze:
+    post:
+      operationId: analyzeAlert
+      tags: [alerts]
+      summary: Trigger AI analysis for an alert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: AI analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiAnalysis"
+        "404":
+          description: Not found
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Dashboard summary stats
+      responses:
+        "200":
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    Server:
+      type: object
+      required: [id, name, host, status, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        host:
+          type: string
+        description:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [online, offline, warning, unknown]
+        agentToken:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ServerInput:
+      type: object
+      required: [name, host]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        host:
+          type: string
+          minLength: 1
+        description:
+          type: string
+
+    ServerUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        host:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [online, offline, warning, unknown]
+
+    ServerMetrics:
+      type: object
+      required: [id, serverId, cpuPercent, memoryUsedMb, memoryTotalMb, diskUsedGb, diskTotalGb, uptimeSeconds, recordedAt]
+      properties:
+        id:
+          type: integer
+        serverId:
+          type: integer
+        cpuPercent:
+          type: number
+        memoryUsedMb:
+          type: number
+        memoryTotalMb:
+          type: number
+        diskUsedGb:
+          type: number
+        diskTotalGb:
+          type: number
+        uptimeSeconds:
+          type: integer
+        networkRxMbps:
+          type: ["number", "null"]
+        networkTxMbps:
+          type: ["number", "null"]
+        topProcess:
+          type: ["string", "null"]
+        recordedAt:
+          type: string
+          format: date-time
+
+    MetricsInput:
+      type: object
+      required: [cpuPercent, memoryUsedMb, memoryTotalMb, diskUsedGb, diskTotalGb, uptimeSeconds]
+      properties:
+        cpuPercent:
+          type: number
+        memoryUsedMb:
+          type: number
+        memoryTotalMb:
+          type: number
+        diskUsedGb:
+          type: number
+        diskTotalGb:
+          type: number
+        uptimeSeconds:
+          type: integer
+        networkRxMbps:
+          type: number
+        networkTxMbps:
+          type: number
+        topProcess:
+          type: string
+        lastLogs:
+          type: string
+
+    Alert:
+      type: object
+      required: [id, serverId, type, message, severity, resolved, createdAt]
+      properties:
+        id:
+          type: integer
+        serverId:
+          type: integer
+        type:
+          type: string
+          enum: [cpu_high, memory_high, disk_high, server_down, custom]
+        message:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, critical]
+        resolved:
+          type: boolean
+        resolvedAt:
+          type: ["string", "null"]
+          format: date-time
+        aiAnalysis:
+          type: ["string", "null"]
+        lastLogs:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    AiAnalysis:
+      type: object
+      required: [alertId, analysis]
+      properties:
+        alertId:
+          type: integer
+        analysis:
+          type: string
+
+    DashboardSummary:
+      type: object
+      required: [totalServers, onlineServers, offlineServers, warningServers, activeAlerts, criticalAlerts]
+      properties:
+        totalServers:
+          type: integer
+        onlineServers:
+          type: integer
+        offlineServers:
+          type: integer
+        warningServers:
+          type: integer
+        activeAlerts:
+          type: integer
+        criticalAlerts:
+          type: integer

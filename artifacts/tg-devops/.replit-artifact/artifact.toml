@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "TG-DevOps"
+version = "1.0.0"
+id = "artifacts/tg-devops"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19103
+
+[services.development]
+run = "pnpm --filter @workspace/tg-devops run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/tg-devops", "run", "build" ]
+publicDir = "artifacts/tg-devops/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19103"
+BASE_PATH = "/"
